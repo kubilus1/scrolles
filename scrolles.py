@@ -3,6 +3,7 @@
 import os
 import time
 import json
+import urllib
 import urllib2
 import argparse
 
@@ -12,8 +13,14 @@ def dourl(url, method='GET', data=None):
     h = urllib2.urlopen(req)
     return h.read()
 
-def scrolles(url, index):
-    URL="%s/%s/_search" % (url, index)
+def scrolles(url, index, keys=None, search=None):
+    if not keys:
+        keys = ["message"]
+    #URL="%s/%s/_search?q=type:vmstat" % (url, index)
+    if search:
+        URL="%s/%s/_search?q=%s" % (url, index, urllib.quote(search))
+    else:
+        URL="%s/%s/_search" % (url, index)
     # ElasticSearch needs some time to settle down 
     QUERY='{"range":{"@timestamp":{"lt":"now-20s"}}}'
     #QUERY='{"match_all": {}}'
@@ -31,7 +38,15 @@ def scrolles(url, index):
             search_date = log_data.get('hits').get('hits')[-1].get('sort')[0]
             search_uid = log_data.get('hits').get('hits')[-1].get('sort')[1]
             for hit in log_data.get('hits').get('hits'):
-                print hit.get('_source').get('message')
+                try:
+                    source_data = hit.get('_source')
+                    for k in keys:
+                        print source_data.get(k),
+                    print
+                except Exception, err:
+                    print "ERR", err
+                    return
+
         time.sleep(2)
 
 if __name__ == "__main__":
@@ -52,5 +67,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--url', dest="url", help="ElasticSearch URL", default=conf.get('url'))
     parser.add_argument('--index', dest="index", help="ElasticSearch Index", default=conf.get('index'))
+    parser.add_argument('-k','--key', action="append", help="Keys to display")
+    parser.add_argument('-s','--search', dest="search", help="Search string")
     args = parser.parse_args()
-    scrolles(args.url, args.index)
+    scrolles(args.url, args.index, args.key, args.search)
