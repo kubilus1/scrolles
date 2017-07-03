@@ -8,7 +8,7 @@ import urllib
 import urllib2
 import argparse
 
-GREY = "\033[1;30m"
+GREY = "\033[0;37m"
 RED   = "\033[1;31m"  
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
