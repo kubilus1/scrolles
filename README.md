@@ -23,6 +23,23 @@ seconds old.
 ```
 $ scrolles.py --url <elasticsearch url> --index <elasticsearch index>
 ```
+Help can be shown with the '-h' param:
+
+```
+$ scrolles.py -h
+usage: scrolles.py [-h] [-u URL] [-i INDEX] [-k KEY] [-s SEARCH] [-n NUMLINES]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u URL, --url URL     ElasticSearch URL
+  -i INDEX, --index INDEX
+                        ElasticSearch Index
+  -k KEY, --key KEY     Keys to display
+  -s SEARCH, --search SEARCH
+                        Search string
+  -n NUMLINES, --numlines NUMLINES
+                        Initial number of lines to show from the logs
+```
 
 ## Configuration
 
@@ -40,8 +57,3 @@ Configuration is searched first in ~/.scrolles.json, then at
 /etc/scrolles.json
 
 You can override configuration by specifying parameters at the command line.
-
-## TODOs
-
-* Add search parameters
-* Add tag searching
