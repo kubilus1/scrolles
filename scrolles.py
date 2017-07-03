@@ -30,10 +30,15 @@ def scrolles(url, index, keys=None, search=None):
     search_date = search_data.get('hits').get('hits')[-1].get('sort')[0]
     search_uid = search_data.get('hits').get('hits')[-1].get('sort')[1]
     while True:
-        log_data = json.loads(dourl(
-            URL,
-            data = '{ "size":50, "query": %s, "search_after": [%s,"%s"], "sort": [ {"@timestamp": "asc"},{"_uid":"asc"} ] }' % (QUERY, search_date, search_uid)
-        ))
+        try:
+            log_data = json.loads(dourl(
+                URL,
+                data = '{ "size":50, "query": %s, "search_after": [%s,"%s"], "sort": [ {"@timestamp": "asc"},{"_uid":"asc"} ] }' % (QUERY, search_date, search_uid)
+            ))
+        except Exception, err:
+            print "ScrollES Error", err
+            continue
+
         if len(log_data.get('hits').get('hits')):
             search_date = log_data.get('hits').get('hits')[-1].get('sort')[0]
             search_uid = log_data.get('hits').get('hits')[-1].get('sort')[1]
