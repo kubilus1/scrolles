@@ -7,15 +7,13 @@ import urllib
 import urllib2
 import argparse
 
-def dourl(url, method='GET', data=None):
+def dourl(url, method='GET', data=None, timeout=30):
     req = urllib2.Request(url, data)
     req.get_method = lambda: method
-    h = urllib2.urlopen(req)
+    h = urllib2.urlopen(req, timeout=timeout)
     return h.read()
 
 def scrolles(url, index, numlines=50, keys=None, search=None):
-    if not keys:
-        keys = ["message"]
     if search:
         URL="%s/%s/_search?q=%s" % (url, index, urllib.quote(search))
     else:
@@ -24,7 +22,7 @@ def scrolles(url, index, numlines=50, keys=None, search=None):
     QUERY='{"range":{"@timestamp":{"lt":"now-20s"}}}'
 
     INITJSON='{"size":%s, "query": %s, "sort": [{"@timestamp": "desc"}, {"_uid":"desc"}]}' % (numlines, QUERY)
-    search_data = json.loads(dourl(URL, data=INITJSON))
+    search_data = json.loads(dourl(URL, data=INITJSON, timeout=120))
     search_date = search_data.get('hits').get('hits')[-1].get('sort')[0]
     search_uid = search_data.get('hits').get('hits')[-1].get('sort')[1]
     while True:
@@ -57,7 +55,10 @@ if __name__ == "__main__":
 
     conf = {
         "index":"*",
-        "url":"http://localhost:9200"
+        "url":"http://localhost:9200",
+        "key":["message"],
+        "numlines":50,
+        "search":None
     }
 
     localpath = os.path.expanduser('~/.scrolles.json')
@@ -71,7 +72,12 @@ if __name__ == "__main__":
     parser.add_argument('-u','--url', dest="url", help="ElasticSearch URL", default=conf.get('url'))
     parser.add_argument('-i','--index', dest="index", help="ElasticSearch Index", default=conf.get('index'))
     parser.add_argument('-k','--key', action="append", help="Keys to display")
-    parser.add_argument('-s','--search', dest="search", help="Search string")
-    parser.add_argument('-n','--numlines', type=int, dest="numlines", help="Initial number of lines to show from the logs", default=50)
+    parser.add_argument('-s','--search', dest="search", help="Search string", default=conf.get('search'))
+    parser.add_argument('-n','--numlines', type=int, dest="numlines", help="Initial number of lines to show from the logs", default=conf.get('numlines'))
     args = parser.parse_args()
-    scrolles(args.url, args.index, args.numlines, args.key, args.search)
+
+    key = args.key
+    if not key:
+        key = conf.get('key')
+
+    scrolles(args.url, args.index, args.numlines, key, args.search)
