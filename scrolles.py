@@ -1,11 +1,25 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import time
 import json
 import urllib
 import urllib2
 import argparse
+
+GREY = "\033[1;30m"
+RED   = "\033[1;31m"  
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+BLUE  = "\033[1;34m"
+PURPLE = "\033[1;35m"
+CYAN  = "\033[1;36m"
+RESET = "\033[0;0m"
+BOLD    = "\033[;1m"
+REVERSE = "\033[;7m"
+
+COLORLIST = [GREY,RED,GREEN,YELLOW,BLUE,PURPLE,CYAN]
 
 def dourl(url, method='GET', data=None, timeout=30):
     req = urllib2.Request(url, data)
@@ -13,7 +27,7 @@ def dourl(url, method='GET', data=None, timeout=30):
     h = urllib2.urlopen(req, timeout=timeout)
     return h.read()
 
-def scrolles(url, index, numlines=50, keys=None, search=None):
+def scrolles(url, index, numlines=50, keys=None, search=None, colorize=False):
     if search:
         URL="%s/%s/_search?q=%s" % (url, index, urllib.quote(search))
     else:
@@ -41,9 +55,17 @@ def scrolles(url, index, numlines=50, keys=None, search=None):
             for hit in log_data.get('hits').get('hits'):
                 try:
                     source_data = hit.get('_source')
-                    for k in keys:
-                        print source_data.get(k),
-                    print
+                    #for k in keys:
+                    #    print source_data.get(k),
+                    #print
+                    for i in xrange(len(keys)):
+                        if colorize:
+                            sys.stdout.write(COLORLIST[i%len(COLORLIST)])
+                        sys.stdout.write(source_data.get(keys[i]))
+                        if colorize:
+                            sys.stdout.write(RESET)
+                        sys.stdout.write(" ")
+                    sys.stdout.write("\n")
                 except Exception, err:
                     print "ERR", err
                     return
@@ -58,7 +80,8 @@ if __name__ == "__main__":
         "url":"http://localhost:9200",
         "key":["message"],
         "numlines":50,
-        "search":None
+        "search":None,
+        "colorize":False
     }
 
     localpath = os.path.expanduser('~/.scrolles.json')
@@ -74,10 +97,11 @@ if __name__ == "__main__":
     parser.add_argument('-k','--key', action="append", help="Keys to display")
     parser.add_argument('-s','--search', dest="search", help="Search string", default=conf.get('search'))
     parser.add_argument('-n','--numlines', type=int, dest="numlines", help="Initial number of lines to show from the logs", default=conf.get('numlines'))
+    parser.add_argument('-c','--colorize', action="store_true", help="Colorize terminal output", default=conf.get('colorize'))
     args = parser.parse_args()
 
     key = args.key
     if not key:
         key = conf.get('key')
 
-    scrolles(args.url, args.index, args.numlines, key, args.search)
+    scrolles(args.url, args.index, args.numlines, key, args.search, args.colorize)
