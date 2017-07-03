@@ -55,13 +55,10 @@ def scrolles(url, index, numlines=50, keys=None, search=None, colorize=False):
             for hit in log_data.get('hits').get('hits'):
                 try:
                     source_data = hit.get('_source')
-                    #for k in keys:
-                    #    print source_data.get(k),
-                    #print
                     for i in xrange(len(keys)):
                         if colorize:
                             sys.stdout.write(COLORLIST[i%len(COLORLIST)])
-                        sys.stdout.write(source_data.get(keys[i]))
+                        sys.stdout.write(str(source_data.get(keys[i])))
                         if colorize:
                             sys.stdout.write(RESET)
                         sys.stdout.write(" ")
