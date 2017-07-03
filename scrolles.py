@@ -13,19 +13,17 @@ def dourl(url, method='GET', data=None):
     h = urllib2.urlopen(req)
     return h.read()
 
-def scrolles(url, index, keys=None, search=None):
+def scrolles(url, index, numlines=50, keys=None, search=None):
     if not keys:
         keys = ["message"]
-    #URL="%s/%s/_search?q=type:vmstat" % (url, index)
     if search:
         URL="%s/%s/_search?q=%s" % (url, index, urllib.quote(search))
     else:
         URL="%s/%s/_search" % (url, index)
     # ElasticSearch needs some time to settle down 
     QUERY='{"range":{"@timestamp":{"lt":"now-20s"}}}'
-    #QUERY='{"match_all": {}}'
 
-    INITJSON='{"size":50, "query": %s, "sort": [{"@timestamp": "desc"}, {"_uid":"desc"}]}' % QUERY
+    INITJSON='{"size":%s, "query": %s, "sort": [{"@timestamp": "desc"}, {"_uid":"desc"}]}' % (numlines, QUERY)
     search_data = json.loads(dourl(URL, data=INITJSON))
     search_date = search_data.get('hits').get('hits')[-1].get('sort')[0]
     search_uid = search_data.get('hits').get('hits')[-1].get('sort')[1]
@@ -33,7 +31,7 @@ def scrolles(url, index, keys=None, search=None):
         try:
             log_data = json.loads(dourl(
                 URL,
-                data = '{ "size":50, "query": %s, "search_after": [%s,"%s"], "sort": [ {"@timestamp": "asc"},{"_uid":"asc"} ] }' % (QUERY, search_date, search_uid)
+                data = '{ "size":%s, "query": %s, "search_after": [%s,"%s"], "sort": [ {"@timestamp": "asc"},{"_uid":"asc"} ] }' % (numlines, QUERY, search_date, search_uid)
             ))
         except Exception, err:
             print "ScrollES Error", err
@@ -70,9 +68,10 @@ if __name__ == "__main__":
         with open('/etc/scrolles.json','r') as h:
             conf.update(json.loads(h.read()))
 
-    parser.add_argument('--url', dest="url", help="ElasticSearch URL", default=conf.get('url'))
-    parser.add_argument('--index', dest="index", help="ElasticSearch Index", default=conf.get('index'))
+    parser.add_argument('-u','--url', dest="url", help="ElasticSearch URL", default=conf.get('url'))
+    parser.add_argument('-i','--index', dest="index", help="ElasticSearch Index", default=conf.get('index'))
     parser.add_argument('-k','--key', action="append", help="Keys to display")
     parser.add_argument('-s','--search', dest="search", help="Search string")
+    parser.add_argument('-n','--numlines', type=int, dest="numlines", help="Initial number of lines to show from the logs", default=50)
     args = parser.parse_args()
-    scrolles(args.url, args.index, args.key, args.search)
+    scrolles(args.url, args.index, args.numlines, args.key, args.search)
