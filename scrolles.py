@@ -37,8 +37,11 @@ def scrolles(url, index, numlines=50, keys=None, search=None, colorize=False):
 
     INITJSON='{"size":%s, "query": %s, "sort": [{"@timestamp": "desc"}, {"_uid":"desc"}]}' % (numlines, QUERY)
     search_data = json.loads(dourl(URL, data=INITJSON, timeout=120))
-    search_date = search_data.get('hits').get('hits')[-1].get('sort')[0]
-    search_uid = search_data.get('hits').get('hits')[-1].get('sort')[1]
+    search_date = 0
+    search_uid = 0
+    if len(search_data.get('hits').get('hits')): 
+        search_date = search_data.get('hits').get('hits')[-1].get('sort')[0]
+        search_uid = search_data.get('hits').get('hits')[-1].get('sort')[1]
     while True:
         try:
             log_data = json.loads(dourl(
